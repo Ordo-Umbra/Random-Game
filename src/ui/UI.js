@@ -3,6 +3,9 @@ export class UI {
     this._statAgents    = document.getElementById('stat-agents');
     this._statTick      = document.getElementById('stat-tick');
     this._statSocieties = document.getElementById('stat-societies');
+    this._eventLog      = document.getElementById('event-log');
+
+    this._lastEventTick = -1;
 
     // Tool buttons
     document.querySelectorAll('.tool-btn').forEach(btn => {
@@ -23,13 +26,28 @@ export class UI {
       });
     }
 
-    // Default active
     document.getElementById('btn-normal')?.classList.add('active');
   }
 
-  update(agentCount, tick, societyCount) {
+  update(agentCount, tick, societyCount, recentEvents) {
     this._statAgents.textContent    = `Agents: ${agentCount}`;
     this._statTick.textContent      = `Tick: ${tick}`;
     this._statSocieties.textContent = `Societies: ${societyCount}`;
+
+    // Show a toast for each new event
+    if (recentEvents.length > 0 && recentEvents[0].tick !== this._lastEventTick) {
+      this._lastEventTick = recentEvents[0].tick;
+      this._showEventToast(recentEvents[0]);
+    }
+  }
+
+  _showEventToast(event) {
+    const toast = document.createElement('div');
+    toast.className = 'event-toast';
+    toast.innerHTML = `<strong>${event.name}</strong> — ${event.desc}`;
+    this._eventLog.appendChild(toast);
+
+    // Remove after animation completes
+    setTimeout(() => toast.remove(), 5000);
   }
 }
