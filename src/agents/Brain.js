@@ -11,7 +11,7 @@ export class Brain {
   update(agent, world, allAgents, tick) {
     if (!agent.alive) return;
 
-    attemptDiscovery(agent, world);
+    attemptDiscovery(agent, world, allAgents);
     broadcastKnowledge(agent, allAgents, tick);
 
     this._moveTimer++;

@@ -1,4 +1,4 @@
-import { STRUCTURE_DEF }      from '../knowledge/Structure.js';
+import { STRUCTURE_DEF, SeedType } from '../knowledge/Structure.js';
 import { STRUCTURE_BUILD_DEF } from '../world/PlacedStructure.js';
 import { ANIMAL_DEF }          from '../animals/Animal.js';
 
@@ -24,7 +24,9 @@ export class Inspector {
       ? societies.get(agent.societyId)
       : null;
 
-    const known = agent.corpus.snapshot();
+    const known  = agent.corpus.snapshot();
+    const kappa  = agent.kappa;
+    const { sC, sI, S, knownCount, total } = agent.corpus.computeS(kappa);
 
     this._body.innerHTML = `
       <div class="inspector-section">
@@ -40,6 +42,17 @@ export class Inspector {
         ${needBar('Hunger', agent.hunger, 'hunger')}
         ${needBar('Energy', agent.energy, 'energy')}
         ${needBar('Social', agent.social,  'social')}
+      </div>
+
+      <div class="inspector-section">
+        <div class="inspector-label">Emergence Score  S = ΔC + κ·ΔI</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:#aaa;margin-bottom:4px">
+          <span>κ <b style="color:#fff">${Math.round(kappa * 100)}%</b></span>
+          <span>ΔC <b style="color:#fff">${knownCount}/${total}</b></span>
+          <span>ΔI <b style="color:#fff">${Math.round(sI * 100)}%</b></span>
+        </div>
+        ${needBar('S', Math.min(1, S / 2), 'social')}
+        <div style="color:#ffd97d;font-size:12px;margin-top:2px">S = ${S.toFixed(3)}</div>
       </div>
 
       <div class="inspector-section">
@@ -139,12 +152,25 @@ function needBar(label, value, cls) {
     </div>`;
 }
 
+const SEED_COLOR = {
+  [SeedType.U1]:  '#7eb8ff',
+  [SeedType.SU2]: '#ffaa55',
+  [SeedType.SU3]: '#77dd88',
+  [SeedType.NONE]: '#666',
+};
+
 function knowledgeBar(id, mastery) {
-  const name = STRUCTURE_DEF[id]?.name ?? id;
+  const def  = STRUCTURE_DEF[id];
+  const name = def?.name ?? id;
   const pct  = Math.round(mastery * 100);
+  const seed = def?.seedType ?? SeedType.NONE;
+  const col  = SEED_COLOR[seed] ?? '#666';
+  const badge = seed !== SeedType.NONE
+    ? `<span style="color:${col};font-size:9px;font-weight:bold;margin-left:3px">${seed}</span>`
+    : '';
   return `
     <div class="knowledge-bar">
-      <span class="knowledge-bar-name">${name}</span>
+      <span class="knowledge-bar-name">${name}${badge}</span>
       <div class="knowledge-bar-track">
         <div class="knowledge-bar-fill" style="width:${pct}%"></div>
       </div>

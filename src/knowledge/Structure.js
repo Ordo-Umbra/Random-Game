@@ -1,5 +1,8 @@
 // A "stable structure" is anything an agent can learn, use, teach, and forget.
-// Examples: fire-making, basic shelter, crop farming, stone tools, etc.
+// Each structure carries a URP seed archetype (U1 / SU2 / SU3):
+//   U1  — unity: binds many into one (fire, language, writing, navigation, shelter)
+//   SU2 — paired transformer: bridges opposites (stone tools, cooking, bow hunting, fishing, medicine)
+//   SU3 — triadic mediation: three-body stability (pottery, metal smelting, ritual, governance)
 
 export const StructureId = Object.freeze({
   FIRE_MAKING:    'fire_making',
@@ -11,22 +14,37 @@ export const StructureId = Object.freeze({
   METAL_SMELTING: 'metal_smelting',
   NAVIGATION:     'navigation',
   WRITING:        'writing',
+  // URP expansions
+  COOKING:        'cooking',
+  BOW_HUNTING:    'bow_hunting',
+  LANGUAGE:       'language',
+  RITUAL:         'ritual',
+  MEDICINE:       'medicine',
+  GOVERNANCE:     'governance',
 });
 
-// Definition of each structure: prerequisites, discovery difficulty, usefulness
+export const SeedType = Object.freeze({
+  U1:   'U1',
+  SU2:  'SU2',
+  SU3:  'SU3',
+  NONE: 'none',
+});
+
 export const STRUCTURE_DEF = {
   [StructureId.FIRE_MAKING]: {
     id: StructureId.FIRE_MAKING,
     name: 'Fire Making',
+    seedType: SeedType.U1,
     prereqs: [],
-    discoverDifficulty: 0.15,   // probability per tick of solo discovery when near wood
-    teachDifficulty: 0.05,       // extra mastery lost in transmission
+    discoverDifficulty: 0.15,
+    teachDifficulty: 0.05,
     uses: ['warmth', 'cooking'],
-    unlocks: [StructureId.POTTERY, StructureId.METAL_SMELTING],
+    unlocks: [StructureId.POTTERY, StructureId.METAL_SMELTING, StructureId.COOKING, StructureId.MEDICINE],
   },
   [StructureId.BASIC_SHELTER]: {
     id: StructureId.BASIC_SHELTER,
     name: 'Basic Shelter',
+    seedType: SeedType.U1,
     prereqs: [],
     discoverDifficulty: 0.10,
     teachDifficulty: 0.05,
@@ -36,15 +54,17 @@ export const STRUCTURE_DEF = {
   [StructureId.STONE_TOOLS]: {
     id: StructureId.STONE_TOOLS,
     name: 'Stone Tools',
+    seedType: SeedType.SU2,
     prereqs: [],
     discoverDifficulty: 0.08,
     teachDifficulty: 0.06,
     uses: ['efficiency'],
-    unlocks: [StructureId.CROP_FARMING, StructureId.NAVIGATION],
+    unlocks: [StructureId.CROP_FARMING, StructureId.NAVIGATION, StructureId.BOW_HUNTING],
   },
   [StructureId.CROP_FARMING]: {
     id: StructureId.CROP_FARMING,
     name: 'Crop Farming',
+    seedType: SeedType.SU2,
     prereqs: [StructureId.STONE_TOOLS],
     discoverDifficulty: 0.03,
     teachDifficulty: 0.08,
@@ -54,6 +74,7 @@ export const STRUCTURE_DEF = {
   [StructureId.FISHING]: {
     id: StructureId.FISHING,
     name: 'Fishing',
+    seedType: SeedType.SU2,
     prereqs: [],
     discoverDifficulty: 0.12,
     teachDifficulty: 0.04,
@@ -63,6 +84,7 @@ export const STRUCTURE_DEF = {
   [StructureId.POTTERY]: {
     id: StructureId.POTTERY,
     name: 'Pottery',
+    seedType: SeedType.SU3,
     prereqs: [StructureId.FIRE_MAKING],
     discoverDifficulty: 0.02,
     teachDifficulty: 0.10,
@@ -72,6 +94,7 @@ export const STRUCTURE_DEF = {
   [StructureId.METAL_SMELTING]: {
     id: StructureId.METAL_SMELTING,
     name: 'Metal Smelting',
+    seedType: SeedType.SU3,
     prereqs: [StructureId.FIRE_MAKING, StructureId.STONE_TOOLS],
     discoverDifficulty: 0.005,
     teachDifficulty: 0.15,
@@ -81,6 +104,7 @@ export const STRUCTURE_DEF = {
   [StructureId.NAVIGATION]: {
     id: StructureId.NAVIGATION,
     name: 'Navigation',
+    seedType: SeedType.U1,
     prereqs: [StructureId.FISHING],
     discoverDifficulty: 0.008,
     teachDifficulty: 0.12,
@@ -90,10 +114,74 @@ export const STRUCTURE_DEF = {
   [StructureId.WRITING]: {
     id: StructureId.WRITING,
     name: 'Writing',
+    seedType: SeedType.U1,
     prereqs: [StructureId.POTTERY],
     discoverDifficulty: 0.002,
-    teachDifficulty: 0.05,   // writing makes teaching easier (irony intended)
+    teachDifficulty: 0.05,
     uses: ['culture'],
+    unlocks: [],
+  },
+
+  // ── URP Seed Structures ────────────────────────────────────────────────────
+
+  [StructureId.COOKING]: {
+    id: StructureId.COOKING,
+    name: 'Cooking',
+    seedType: SeedType.SU2,           // raw ↔ nourishing: a paired transformation
+    prereqs: [StructureId.FIRE_MAKING],
+    discoverDifficulty: 0.10,
+    teachDifficulty: 0.04,
+    uses: ['food', 'efficiency'],
+    unlocks: [],
+  },
+  [StructureId.BOW_HUNTING]: {
+    id: StructureId.BOW_HUNTING,
+    name: 'Bow Hunting',
+    seedType: SeedType.SU2,           // hunter ↔ prey: distance predation duality
+    prereqs: [StructureId.STONE_TOOLS],
+    discoverDifficulty: 0.06,
+    teachDifficulty: 0.07,
+    uses: ['food', 'efficiency'],
+    unlocks: [],
+  },
+  [StructureId.LANGUAGE]: {
+    id: StructureId.LANGUAGE,
+    name: 'Language',
+    seedType: SeedType.U1,            // unifies meaning across minds
+    prereqs: [],
+    discoverDifficulty: 0.05,         // social discovery: requires nearby agents
+    teachDifficulty: 0.03,
+    uses: ['culture', 'teaching'],
+    unlocks: [StructureId.RITUAL, StructureId.GOVERNANCE],
+  },
+  [StructureId.RITUAL]: {
+    id: StructureId.RITUAL,
+    name: 'Ritual',
+    seedType: SeedType.SU3,           // body × mind × community triad
+    prereqs: [StructureId.LANGUAGE, StructureId.FIRE_MAKING],
+    discoverDifficulty: 0.04,
+    teachDifficulty: 0.08,
+    uses: ['culture', 'cohesion'],
+    unlocks: [StructureId.GOVERNANCE],
+  },
+  [StructureId.MEDICINE]: {
+    id: StructureId.MEDICINE,
+    name: 'Medicine',
+    seedType: SeedType.SU2,           // life ↔ death: mediates the boundary
+    prereqs: [StructureId.FIRE_MAKING],
+    discoverDifficulty: 0.05,         // discovered near death (skeletons)
+    teachDifficulty: 0.09,
+    uses: ['healing'],
+    unlocks: [],
+  },
+  [StructureId.GOVERNANCE]: {
+    id: StructureId.GOVERNANCE,
+    name: 'Governance',
+    seedType: SeedType.SU3,           // leaders × rules × followers triad
+    prereqs: [StructureId.RITUAL, StructureId.LANGUAGE],
+    discoverDifficulty: 0.02,         // emerges only within societies
+    teachDifficulty: 0.12,
+    uses: ['culture', 'cohesion', 'efficiency'],
     unlocks: [],
   },
 };
