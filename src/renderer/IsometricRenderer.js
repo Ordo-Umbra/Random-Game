@@ -30,7 +30,7 @@ export class IsometricRenderer {
     ctx.fillStyle = '#0d0d1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw tiles back-to-front (painter's algorithm for iso)
+    // Draw tiles and structures back-to-front (painter's algorithm for iso)
     for (let y = 0; y < world.height; y++) {
       for (let x = 0; x < world.width; x++) {
         const tile = world.getTile(x, y);
@@ -43,6 +43,11 @@ export class IsometricRenderer {
         if (sy < -tileH * 4 || sy > canvas.height + tileH) continue;
 
         this._drawTile(ctx, tile, sx, sy, tileW, tileH);
+
+        const structure = world.getStructure(x, y);
+        if (structure && structure.intact) {
+          this._drawStructure(ctx, structure, tile, sx, sy, tileW, tileH);
+        }
       }
     }
 
@@ -120,6 +125,113 @@ export class IsometricRenderer {
       ctx.closePath();
       ctx.fillStyle = peakColor;
       ctx.fill();
+    }
+  }
+
+  _drawStructure(ctx, structure, tile, sx, sy, tileW, tileH) {
+    const elevOffset = Math.round(tile.elevation * 12 * (tileH / BASE_TILE_H));
+    const cx = sx + tileW / 2;
+    const ty = sy - elevOffset;
+    const health = structure.healthFraction;
+
+    // Fade slightly when damaged
+    ctx.globalAlpha = 0.5 + health * 0.5;
+
+    switch (structure.type) {
+      case 'campfire': {
+        // Stone ring
+        ctx.beginPath();
+        ctx.ellipse(cx, ty - tileH * 0.1, tileW * 0.13, tileH * 0.13, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#555';
+        ctx.fill();
+        // Fire glow
+        ctx.beginPath();
+        ctx.ellipse(cx, ty - tileH * 0.18, tileW * 0.07, tileH * 0.12, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#e86020';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx, ty - tileH * 0.22, tileW * 0.04, tileH * 0.08, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffe060';
+        ctx.fill();
+        break;
+      }
+      case 'shelter': {
+        // Simple hut: back wall + roof
+        const w = tileW * 0.38, h = tileH * 0.55;
+        // Back wall
+        ctx.beginPath();
+        ctx.rect(cx - w / 2, ty - tileH * 0.6 - h, w, h);
+        ctx.fillStyle = '#7a5230';
+        ctx.fill();
+        // Roof triangle
+        ctx.beginPath();
+        ctx.moveTo(cx - w / 2 - 4, ty - tileH * 0.6 - h);
+        ctx.lineTo(cx,              ty - tileH * 0.6 - h - tileH * 0.35);
+        ctx.lineTo(cx + w / 2 + 4, ty - tileH * 0.6 - h);
+        ctx.closePath();
+        ctx.fillStyle = '#5a3a1a';
+        ctx.fill();
+        break;
+      }
+      case 'farm': {
+        // Green furrow lines across the tile top
+        ctx.strokeStyle = '#5ab040';
+        ctx.lineWidth   = Math.max(1, tileW * 0.025);
+        for (let i = 1; i <= 3; i++) {
+          const t = i / 4;
+          // Interpolate along the top face diamond
+          const lx = sx + tileW * t;
+          const ly = ty - tileH / 2 + tileH * t;
+          const rx = sx + tileW * t;
+          const ry = ty + tileH / 2 - tileH * t;
+          ctx.beginPath();
+          ctx.moveTo(lx - tileW * 0.25, ly);
+          ctx.lineTo(rx + tileW * 0.25, ry - tileH * 0.25);
+          ctx.stroke();
+        }
+        // Small crop dots
+        ctx.fillStyle = '#80d050';
+        for (let i = 0; i < 4; i++) {
+          const angle = (i / 4) * Math.PI * 2;
+          const ex = cx + Math.cos(angle) * tileW * 0.14;
+          const ey = (ty - tileH * 0.05) + Math.sin(angle) * tileH * 0.1;
+          ctx.beginPath();
+          ctx.arc(ex, ey - tileH * 0.15, tileW * 0.04, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+      case 'fishing_dock': {
+        // Horizontal dock planks
+        ctx.strokeStyle = '#8a6030';
+        ctx.lineWidth   = Math.max(1, tileW * 0.04);
+        for (let i = 0; i < 3; i++) {
+          const t = 0.3 + i * 0.2;
+          ctx.beginPath();
+          ctx.moveTo(sx + tileW * t - tileW * 0.15, ty - tileH * 0.1 + tileH * t * 0.5);
+          ctx.lineTo(sx + tileW * t + tileW * 0.15, ty - tileH * 0.1 + tileH * t * 0.5);
+          ctx.stroke();
+        }
+        // Vertical post
+        ctx.beginPath();
+        ctx.moveTo(cx, ty - tileH * 0.05);
+        ctx.lineTo(cx, ty - tileH * 0.05 - tileH * 0.4);
+        ctx.stroke();
+        break;
+      }
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Health bar if damaged
+    if (health < 0.8) {
+      const bw = tileW * 0.4;
+      const bx = cx - bw / 2;
+      const by = ty - tileH * 0.85;
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(bx, by, bw, 3);
+      ctx.fillStyle = `hsl(${health * 120}, 80%, 50%)`;
+      ctx.fillRect(bx, by, bw * health, 3);
     }
   }
 

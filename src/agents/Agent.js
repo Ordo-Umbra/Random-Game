@@ -1,4 +1,5 @@
-import { Corpus } from './Corpus.js';
+import { Corpus }  from './Corpus.js';
+import { Builder } from './Builder.js';
 
 let _nextId = 0;
 
@@ -17,12 +18,17 @@ export class Agent {
     this.lifespan = 800 + Math.floor(Math.random() * 400); // ticks
 
     this.corpus = new Corpus();
+    this.builder = new Builder();
     this.societyId = null;   // assigned by SocietyTracker
 
     // Movement state
     this._path = [];
-    this._goal = null;        // { x, y } or null
+    this._goal = null;
     this._actionCooldown = 0;
+
+    // Reproduction
+    this.reproduceCooldown = 150 + Math.floor(Math.random() * 100);
+    this.minReproduceAge   = 80;
 
     // Visual — slight color variation per agent for readability
     this._hue = Math.floor(Math.random() * 360);
@@ -30,6 +36,16 @@ export class Agent {
 
   get alive() {
     return this.hunger > 0 && this.energy > 0 && this.age < this.lifespan;
+  }
+
+  get canReproduce() {
+    return (
+      this.alive &&
+      this.age >= this.minReproduceAge &&
+      this.reproduceCooldown <= 0 &&
+      this.hunger >= 0.6 &&
+      this.energy >= 0.4
+    );
   }
 
   // Called once per world tick by the Brain
@@ -49,10 +65,10 @@ export class Agent {
     ).length;
     if (nearbyCount > 0) this.social = Math.min(1, this.social + 0.001 * nearbyCount);
 
+    if (this.reproduceCooldown > 0) this.reproduceCooldown--;
     this._actionCooldown--;
   }
 
-  // Move one step along current path
   stepPath() {
     if (this._path.length === 0) return false;
     const next = this._path.shift();
@@ -61,7 +77,6 @@ export class Agent {
     return true;
   }
 
-  // Assign a new path computed from outside (Brain / World)
   setPath(path) {
     this._path = path ?? [];
   }
@@ -74,23 +89,57 @@ export class Agent {
     return this._path.length === 0 && this._goal === null && this._actionCooldown <= 0;
   }
 
-  // Eat from current tile if it has a food resource; returns amount eaten
+  // Eat from current tile; gains bonus from farms, docks, and nearby campfires
   eat(world) {
     const tile = world.getTile(this.x, this.y);
     if (!tile) return 0;
+
+    let gain = 0;
+
     if (tile.resource === 'food' || tile.resource === 'fish') {
-      const gain = 0.15;
-      this.hunger = Math.min(1, this.hunger + gain);
-      this.corpus.use('crop_farming');
-      this.corpus.use('fishing');
-      return gain;
+      gain = 0.15;
     }
-    return 0;
+
+    const structure = world.getStructure(this.x, this.y);
+    if (structure && structure.intact) {
+      if (structure.type === 'farm') {
+        gain = Math.max(gain, 0.18);
+        this.corpus.use('crop_farming');
+      }
+      if (structure.type === 'fishing_dock') {
+        gain = Math.max(gain, 0.16);
+        this.corpus.use('fishing');
+      }
+    }
+
+    if (gain > 0 && hasNearbyStructure(this.x, this.y, 'campfire', world, 2)) {
+      gain *= 1.3;
+      this.corpus.use('fire_making');
+    }
+
+    if (gain > 0) {
+      this.hunger = Math.min(1, this.hunger + gain);
+    }
+    return gain;
   }
 
-  // Rest; gains energy faster if agent knows shelter
-  rest() {
-    const shelterBonus = this.corpus.getMastery('basic_shelter') * 0.5;
-    this.energy = Math.min(1, this.energy + 0.01 + shelterBonus * 0.005);
+  // Rest; energy regen is boosted by a nearby shelter
+  rest(world) {
+    let regen = 0.01;
+    if (world && hasNearbyStructure(this.x, this.y, 'shelter', world, 1)) {
+      regen += 0.015;
+    }
+    regen += this.corpus.getMastery('basic_shelter') * 0.003;
+    this.energy = Math.min(1, this.energy + regen);
   }
+}
+
+function hasNearbyStructure(x, y, type, world, radius) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const s = world.getStructure(x + dx, y + dy);
+      if (s && s.type === type && s.intact) return true;
+    }
+  }
+  return false;
 }

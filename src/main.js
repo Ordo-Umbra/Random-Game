@@ -7,6 +7,7 @@ import { SocietyTracker }      from './societies/Society.js';
 import { UI }                  from './ui/UI.js';
 import { Inspector }           from './ui/Inspector.js';
 import { TileType }            from './world/Tile.js';
+import { tickReproduction }    from './agents/Reproduction.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const WORLD_W       = 64;
@@ -80,7 +81,7 @@ canvas.addEventListener('click', e => {
       return;
     }
     const hit = renderer.getTileAt(sx, sy, world);
-    if (hit) inspector.showTile(hit.x, hit.y, hit.tile);
+    if (hit) inspector.showTile(hit.x, hit.y, hit.tile, world.getStructure(hit.x, hit.y));
     return;
   }
 
@@ -113,6 +114,9 @@ function simTick() {
     if (brain) brain.update(agent, world, agents, world.tick);
     agent.tick(world, agents);
   }
+
+  // Reproduction
+  tickReproduction(agents, world, spawnAgent);
 
   // Reap dead agents
   agents = agents.filter(a => {

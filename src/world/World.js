@@ -1,5 +1,6 @@
 import { generateTerrain } from './TerrainGen.js';
 import { TileType, Tile } from './Tile.js';
+import { PlacedStructure } from './PlacedStructure.js';
 
 export class World {
   constructor(width, height, seed = 42) {
@@ -9,6 +10,9 @@ export class World {
     this.tiles = generateTerrain(width, height, seed);
     this.agents = [];     // populated by AgentManager
     this.tick = 0;
+
+    // Map<"x,y", PlacedStructure>
+    this.structures = new Map();
   }
 
   getTile(x, y) {
@@ -73,9 +77,51 @@ export class World {
     return best;
   }
 
+  // ── Structure helpers ──────────────────────────────────────────────────────
+
+  _key(x, y) { return `${x},${y}`; }
+
+  getStructure(x, y) {
+    return this.structures.get(this._key(x, y)) ?? null;
+  }
+
+  placeStructure(x, y, type, agentId) {
+    this.structures.set(this._key(x, y), new PlacedStructure(type, agentId, this.tick));
+  }
+
+  removeStructure(x, y) {
+    this.structures.delete(this._key(x, y));
+  }
+
+  // Find nearest structure of a given type within radius; returns {x, y} or null
+  findNearestStructure(ox, oy, type, radius = 12) {
+    let best = null, bestDist = Infinity;
+    for (const [key, s] of this.structures) {
+      if (s.type !== type) continue;
+      const [sx, sy] = key.split(',').map(Number);
+      const d = Math.abs(sx - ox) + Math.abs(sy - oy);
+      if (d <= radius && d < bestDist) { bestDist = d; best = { x: sx, y: sy }; }
+    }
+    return best;
+  }
+
+  // Whether any adjacent tile (4-dir) is water
+  hasAdjacentWater(x, y) {
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const t = this.getTile(x + dx, y + dy);
+      if (t && (t.type === TileType.SHALLOW_WATER || t.type === TileType.DEEP_WATER)) return true;
+    }
+    return false;
+  }
+
   // Called each game tick by the game loop
   update() {
     this.tick++;
-    // Future: resource regrowth, weather, etc.
+
+    // Decay all structures; remove collapsed ones
+    for (const [key, s] of this.structures) {
+      s.decay();
+      if (!s.intact) this.structures.delete(key);
+    }
   }
 }
