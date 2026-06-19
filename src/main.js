@@ -8,6 +8,7 @@ import { UI }                  from './ui/UI.js';
 import { Inspector }           from './ui/Inspector.js';
 import { TileType }            from './world/Tile.js';
 import { tickReproduction }    from './agents/Reproduction.js';
+import { EventSystem }         from './world/Events.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const WORLD_W       = 64;
@@ -23,6 +24,7 @@ const renderer = new IsometricRenderer(canvas, camera);
 
 const world    = new World(WORLD_W, WORLD_H, SEED);
 const societies = new SocietyTracker();
+const events   = new EventSystem();
 const brains   = new Map();   // agentId -> Brain
 
 let agents = [];
@@ -70,6 +72,7 @@ const ui = new UI(
 );
 
 canvas.addEventListener('click', e => {
+  if (camera.wasDragging) return;   // suppress click after a drag
   const rect = canvas.getBoundingClientRect();
   const sx = e.clientX - rect.left;
   const sy = e.clientY - rect.top;
@@ -127,8 +130,11 @@ function simTick() {
   // Society clustering
   societies.update(agents, world.tick);
 
+  // Random world events
+  events.update(world, agents, spawnAgent);
+
   // Update HUD
-  ui.update(agents.length, world.tick, societies.count);
+  ui.update(agents.length, world.tick, societies.count, events.recentEvents);
 }
 
 // ── Render loop ───────────────────────────────────────────────────────────────
@@ -149,6 +155,7 @@ function loop(now) {
     }
   }
 
+  camera.updateKeyboard();
   renderer.render(world, agents, societies.societies);
 }
 
