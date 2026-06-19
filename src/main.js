@@ -210,15 +210,24 @@ function handleHunting() {
   for (const agent of agents) {
     if (!agent.alive || agent.hunger > 0.65) continue;
 
-    // Catch prey on the same tile
-    const prey = animals.find(a => a.alive && a.isPrey && a.x === agent.x && a.y === agent.y);
+    // Bow hunting (SU2): higher mastery extends catch range by 1 tile
+    const bowMastery   = agent.corpus.getMastery('bow_hunting');
+    const catchRange   = bowMastery > 0.35 ? 1 : 0;
+    const stoneMastery = agent.corpus.getMastery('stone_tools');
+
+    // Catch prey within range
+    const prey = animals.find(a =>
+      a.alive && a.isPrey &&
+      Math.abs(a.x - agent.x) <= catchRange && Math.abs(a.y - agent.y) <= catchRange
+    );
     if (prey) {
-      const stoneMastery = agent.corpus.getMastery('stone_tools');
-      if (Math.random() < 0.12 + stoneMastery * 0.30) {
+      const catchChance = 0.12 + stoneMastery * 0.30 + bowMastery * 0.25;
+      if (Math.random() < catchChance) {
         prey.takeDamage(1);
         if (!prey.alive) {
           agent.hunger = Math.min(1, agent.hunger + ANIMAL_DEF[prey.type].foodValue);
           agent.corpus.use('stone_tools');
+          if (bowMastery > 0.1) agent.corpus.use('bow_hunting');
         }
       }
       continue;

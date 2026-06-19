@@ -48,11 +48,16 @@ export class Agent {
     );
   }
 
+  // URP capacity field κ: agent's available potential to integrate new knowledge
+  get kappa() {
+    return this.hunger * 0.5 + this.energy * 0.5;
+  }
+
   // Called once per world tick by the Brain
   tick(world, allAgents) {
     if (!this.alive) return;
     this.age++;
-    this.corpus.tick();
+    this.corpus.tick(this.corpus.getMastery('ritual'));
 
     // Passive need decay
     this.hunger = Math.max(0, this.hunger - 0.0008);
@@ -67,6 +72,13 @@ export class Agent {
 
     if (this.reproduceCooldown > 0) this.reproduceCooldown--;
     this._actionCooldown--;
+
+    // Medicine (SU2): chance to recover critical energy, discovered near death
+    const medicineMastery = this.corpus.getMastery('medicine');
+    if (medicineMastery > 0.3 && this.energy < 0.2 && Math.random() < medicineMastery * 0.003) {
+      this.energy = Math.min(1, this.energy + 0.06);
+      this.corpus.use('medicine');
+    }
   }
 
   stepPath() {
@@ -113,8 +125,10 @@ export class Agent {
     }
 
     if (gain > 0 && hasNearbyStructure(this.x, this.y, 'campfire', world, 2)) {
-      gain *= 1.3;
+      const cookingMastery = this.corpus.getMastery('cooking');
+      gain *= 1.3 + cookingMastery * 0.5;  // cooking adds up to +50% on top of campfire bonus
       this.corpus.use('fire_making');
+      if (cookingMastery > 0.1) this.corpus.use('cooking');
     }
 
     if (gain > 0) {
