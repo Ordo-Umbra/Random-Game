@@ -1,9 +1,6 @@
 import { TileType } from '../world/Tile.js';
 import { broadcastKnowledge, attemptDiscovery } from '../knowledge/Transmission.js';
 
-// Priority-based decision-making: each tick Brain picks one action for the agent.
-// Order of priority: survive → socialize/teach → explore
-
 const MOVE_EVERY = 3;    // ticks between movement steps
 
 export class Brain {
@@ -14,31 +11,40 @@ export class Brain {
   update(agent, world, allAgents, tick) {
     if (!agent.alive) return;
 
-    // Knowledge systems run regardless of other actions
     attemptDiscovery(agent, world);
     broadcastKnowledge(agent, allAgents, tick);
 
     this._moveTimer++;
 
-    // --- Priority 1: Critical hunger — find food immediately ---
+    // --- Priority 1: Critical hunger ---
     if (agent.hunger < 0.25) {
       this._seekFood(agent, world);
       return;
     }
 
-    // --- Priority 2: Critical energy — rest ---
+    // --- Priority 2: Critical energy ---
     if (agent.energy < 0.15) {
-      agent.rest();
+      agent.rest(world);
       return;
     }
 
-    // --- Priority 3: Low hunger — wander toward food ---
+    // --- Priority 3: Builder (mid-build takes full action) ---
+    if (agent.builder.isBuilding) {
+      agent.builder.update(agent, world);
+      return;
+    }
+
+    // --- Priority 4: Low hunger ---
     if (agent.hunger < 0.6) {
       this._seekFood(agent, world);
       return;
     }
 
-    // --- Priority 4: Follow existing path or pick a wander destination ---
+    // --- Priority 5: Try to build something ---
+    // Builder handles its own cooldown; if it sets a path we fall through to movement
+    agent.builder.update(agent, world);
+
+    // --- Priority 6: Follow existing path or wander ---
     if (agent.hasPath) {
       if (this._moveTimer >= MOVE_EVERY) {
         agent.stepPath();
@@ -47,39 +53,42 @@ export class Brain {
       return;
     }
 
-    // Idle wander
     this._wander(agent, world);
   }
 
   _seekFood(agent, world) {
     if (agent.hasPath) {
       if (this._moveTimer >= MOVE_EVERY) {
-        const atGoal = !agent.stepPath();
+        agent.stepPath();
         this._moveTimer = 0;
-        if (atGoal || !agent.hasPath) agent.eat(world);
+        if (!agent.hasPath) agent.eat(world);
       }
       return;
     }
 
-    // Try to eat where we stand first
     if (agent.eat(world) > 0) return;
 
-    // Find nearest food tile
-    const foodTile = world.findNearest(agent.x, agent.y, TileType.GRASS, 25)
-      || world.findNearest(agent.x, agent.y, TileType.FOREST, 25)
-      || world.findNearest(agent.x, agent.y, TileType.SHALLOW_WATER, 25);
+    // Prefer farm/dock structures first, then natural tiles
+    const farmSpot = world.findNearestStructure(agent.x, agent.y, 'farm', 20)
+      || world.findNearestStructure(agent.x, agent.y, 'fishing_dock', 20);
 
-    if (foodTile) {
-      const path = world.findPath(agent.x, agent.y, foodTile.x, foodTile.y);
+    const naturalSpot = !farmSpot && (
+      world.findNearest(agent.x, agent.y, TileType.GRASS, 25)
+      || world.findNearest(agent.x, agent.y, TileType.FOREST, 25)
+      || world.findNearest(agent.x, agent.y, TileType.SHALLOW_WATER, 25)
+    );
+
+    const target = farmSpot || naturalSpot;
+    if (target) {
+      const path = world.findPath(agent.x, agent.y, target.x, target.y);
       if (path) agent.setPath(path);
     }
   }
 
   _wander(agent, world) {
-    if (this._moveTimer < MOVE_EVERY * 4) return; // wait a bit before wandering
+    if (this._moveTimer < MOVE_EVERY * 4) return;
     this._moveTimer = 0;
 
-    // Pick a random reachable tile nearby
     const dx = Math.floor(Math.random() * 7) - 3;
     const dy = Math.floor(Math.random() * 7) - 3;
     const tx = agent.x + dx, ty = agent.y + dy;

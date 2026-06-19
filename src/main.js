@@ -81,7 +81,7 @@ canvas.addEventListener('click', e => {
       return;
     }
     const hit = renderer.getTileAt(sx, sy, world);
-    if (hit) inspector.showTile(hit.x, hit.y, hit.tile);
+    if (hit) inspector.showTile(hit.x, hit.y, hit.tile, world.getStructure(hit.x, hit.y));
     return;
   }
 

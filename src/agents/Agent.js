@@ -1,4 +1,5 @@
-import { Corpus } from './Corpus.js';
+import { Corpus }  from './Corpus.js';
+import { Builder } from './Builder.js';
 
 let _nextId = 0;
 
@@ -17,6 +18,7 @@ export class Agent {
     this.lifespan = 800 + Math.floor(Math.random() * 400); // ticks
 
     this.corpus = new Corpus();
+    this.builder = new Builder();
     this.societyId = null;   // assigned by SocietyTracker
 
     // Movement state
@@ -67,7 +69,6 @@ export class Agent {
     this._actionCooldown--;
   }
 
-  // Move one step along current path
   stepPath() {
     if (this._path.length === 0) return false;
     const next = this._path.shift();
@@ -88,21 +89,57 @@ export class Agent {
     return this._path.length === 0 && this._goal === null && this._actionCooldown <= 0;
   }
 
+  // Eat from current tile; gains bonus from farms, docks, and nearby campfires
   eat(world) {
     const tile = world.getTile(this.x, this.y);
     if (!tile) return 0;
+
+    let gain = 0;
+
     if (tile.resource === 'food' || tile.resource === 'fish') {
-      const gain = 0.15;
-      this.hunger = Math.min(1, this.hunger + gain);
-      this.corpus.use('crop_farming');
-      this.corpus.use('fishing');
-      return gain;
+      gain = 0.15;
     }
-    return 0;
+
+    const structure = world.getStructure(this.x, this.y);
+    if (structure && structure.intact) {
+      if (structure.type === 'farm') {
+        gain = Math.max(gain, 0.18);
+        this.corpus.use('crop_farming');
+      }
+      if (structure.type === 'fishing_dock') {
+        gain = Math.max(gain, 0.16);
+        this.corpus.use('fishing');
+      }
+    }
+
+    if (gain > 0 && hasNearbyStructure(this.x, this.y, 'campfire', world, 2)) {
+      gain *= 1.3;
+      this.corpus.use('fire_making');
+    }
+
+    if (gain > 0) {
+      this.hunger = Math.min(1, this.hunger + gain);
+    }
+    return gain;
   }
 
-  rest() {
-    const shelterBonus = this.corpus.getMastery('basic_shelter') * 0.5;
-    this.energy = Math.min(1, this.energy + 0.01 + shelterBonus * 0.005);
+  // Rest; energy regen is boosted by a nearby shelter
+  rest(world) {
+    let regen = 0.01;
+    if (world && hasNearbyStructure(this.x, this.y, 'shelter', world, 1)) {
+      regen += 0.015;
+    }
+    regen += this.corpus.getMastery('basic_shelter') * 0.003;
+    this.energy = Math.min(1, this.energy + regen);
   }
+}
+
+function hasNearbyStructure(x, y, type, world, radius) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const s = world.getStructure(x + dx, y + dy);
+      if (s && s.type === type && s.intact) return true;
+    }
+  }
+  return false;
 }

@@ -1,4 +1,5 @@
-import { STRUCTURE_DEF } from '../knowledge/Structure.js';
+import { STRUCTURE_DEF }      from '../knowledge/Structure.js';
+import { STRUCTURE_BUILD_DEF } from '../world/PlacedStructure.js';
 
 export class Inspector {
   constructor() {
@@ -58,18 +59,25 @@ export class Inspector {
     `;
   }
 
-  showTile(x, y, tile) {
+  showTile(x, y, tile, structure) {
     this._panel.classList.remove('hidden');
     this._title.textContent = `Tile (${x}, ${y})`;
     this._body.innerHTML = `
       <div class="inspector-section">
         <div class="inspector-label">Terrain</div>
-        <div>Type: ${tile.type.replace('_', ' ')}</div>
+        <div>Type: ${tile.type.replace(/_/g, ' ')}</div>
         <div>Elevation: ${(tile.elevation * 100).toFixed(0)}%</div>
         <div>Moisture: ${(tile.moisture * 100).toFixed(0)}%</div>
         <div>Resource: ${tile.resource ?? 'none'}</div>
         <div>Passable: ${tile.passable ? 'yes' : 'no'}</div>
       </div>
+      ${structure ? `
+      <div class="inspector-section">
+        <div class="inspector-label">Structure</div>
+        <div>${STRUCTURE_BUILD_DEF[structure.type]?.name ?? structure.type}</div>
+        ${needBar('Health', structure.healthFraction, 'energy')}
+        <div style="color:#888;font-size:11px">Built tick ${structure.builtAt} · by agent #${structure.builtBy}</div>
+      </div>` : ''}
     `;
   }
 }
