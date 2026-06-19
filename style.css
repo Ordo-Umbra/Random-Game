@@ -1,0 +1,243 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#world-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(10, 10, 25, 0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 14px;
+  pointer-events: all;
+}
+
+#time-controls {
+  display: flex;
+  gap: 4px;
+}
+
+#time-controls button {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ccc;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+
+#time-controls button:hover,
+#time-controls button.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border-color: rgba(255,255,255,0.3);
+}
+
+#stats {
+  display: flex;
+  gap: 14px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+#stats span {
+  white-space: nowrap;
+}
+
+/* Toolbar */
+#toolbar {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(10, 10, 25, 0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 8px 6px;
+}
+
+.tool-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: #ccc;
+  border-radius: 5px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.tool-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.tool-btn.active {
+  background: rgba(80, 140, 255, 0.2);
+  border-color: rgba(80, 140, 255, 0.5);
+  color: #8abaff;
+}
+
+/* Inspector panel */
+.panel {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 260px;
+  background: rgba(10, 10, 25, 0.92);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel.hidden {
+  display: none;
+}
+
+#inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+
+#inspector-title {
+  font-weight: bold;
+  color: #fff;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#inspector-close {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+}
+
+#inspector-close:hover {
+  color: #fff;
+}
+
+#inspector-body {
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #ccc;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+.inspector-section {
+  margin-bottom: 10px;
+}
+
+.inspector-label {
+  color: #6a8fff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+
+.knowledge-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.knowledge-bar-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ddd;
+}
+
+.knowledge-bar-track {
+  width: 60px;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.knowledge-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4a7aff, #8abaff);
+  transition: width 0.3s;
+}
+
+.need-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.need-label {
+  width: 60px;
+  color: #aaa;
+}
+
+.need-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.need-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.need-fill.hunger { background: #e86c3a; }
+.need-fill.energy { background: #4ac2e8; }
+.need-fill.social { background: #a064e8; }
