@@ -1,4 +1,5 @@
-import { TILE_DEF } from '../world/Tile.js';
+import { TILE_DEF }    from '../world/Tile.js';
+import { ANIMAL_DEF } from '../animals/Animal.js';
 
 const BASE_TILE_W = 64;
 const BASE_TILE_H = 32;
@@ -19,7 +20,7 @@ export class IsometricRenderer {
     this.canvas.height = this.canvas.clientHeight;
   }
 
-  render(world, agents, societies) {
+  render(world, agents, societies, animals) {
     const { ctx, canvas, camera } = this;
     const tileW = BASE_TILE_W * camera.zoom;
     const tileH = BASE_TILE_H * camera.zoom;
@@ -49,6 +50,23 @@ export class IsometricRenderer {
           this._drawStructure(ctx, structure, tile, sx, sy, tileW, tileH);
         }
       }
+    }
+
+    // Draw skeletons (on ground, under entities)
+    for (const skeleton of world.skeletons) {
+      const { sx, sy } = this._isoProject(skeleton.x, skeleton.y, cx, cy, tileW, tileH, camera);
+      if (sx < -tileW || sx > canvas.width + tileW) continue;
+      const tile = world.getTile(skeleton.x, skeleton.y);
+      const elevOffset = tile ? Math.round(tile.elevation * 12 * (tileH / BASE_TILE_H)) : 0;
+      this._drawSkeleton(ctx, skeleton, sx, sy, tileW, tileH, elevOffset, world.tick);
+    }
+
+    // Draw animals
+    for (const animal of animals) {
+      if (!animal.alive) continue;
+      const { sx, sy } = this._isoProject(animal.x, animal.y, cx, cy, tileW, tileH, camera);
+      if (sx < -tileW || sx > canvas.width + tileW) continue;
+      this._drawAnimal(ctx, animal, sx, sy, tileW, tileH);
     }
 
     // Draw agents
@@ -279,20 +297,119 @@ export class IsometricRenderer {
     return { x, y, tile: world.getTile(x, y) };
   }
 
+  _drawAnimal(ctx, animal, sx, sy, tileW, tileH) {
+    const def  = ANIMAL_DEF[animal.type];
+    const r    = Math.max(2, tileW * def.drawSize);
+    const ax   = sx + tileW / 2;
+    const ay   = sy - r * 0.4;
+
+    // Shadow
+    ctx.beginPath();
+    ctx.ellipse(ax, ay + r * 0.5, r * 0.9, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fill();
+
+    // Body
+    ctx.beginPath();
+    if (animal.type === 'wolf') {
+      // Elongated oval for wolf
+      ctx.ellipse(ax, ay, r * 1.4, r * 0.8, Math.PI * 0.08, 0, Math.PI * 2);
+    } else {
+      ctx.arc(ax, ay, r, 0, Math.PI * 2);
+    }
+    ctx.fillStyle = def.color;
+    ctx.fill();
+    ctx.strokeStyle = def.highlightColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Rabbit ears (two tiny dots above)
+    if (animal.type === 'rabbit') {
+      ctx.fillStyle = def.highlightColor;
+      ctx.beginPath(); ctx.arc(ax - r * 0.3, ay - r * 1.0, r * 0.25, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ax + r * 0.3, ay - r * 1.0, r * 0.25, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Wolf eyes (two small dots)
+    if (animal.type === 'wolf') {
+      ctx.fillStyle = '#ffcc44';
+      ctx.beginPath(); ctx.arc(ax - r * 0.4, ay - r * 0.2, r * 0.18, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ax + r * 0.4, ay - r * 0.2, r * 0.18, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Health bar if damaged
+    if (animal.health < animal.maxHealth) {
+      const bw  = r * 2.2;
+      const bx  = ax - bw / 2;
+      const by  = ay - r - 6;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(bx, by, bw, 3);
+      ctx.fillStyle = `hsl(${(animal.health / animal.maxHealth) * 120}, 80%, 50%)`;
+      ctx.fillRect(bx, by, bw * (animal.health / animal.maxHealth), 3);
+    }
+  }
+
+  _drawSkeleton(ctx, skeleton, sx, sy, tileW, tileH, elevOffset, tick) {
+    const ax = sx + tileW / 2;
+    const ay = sy - elevOffset - tileH * 0.05;
+    const r  = Math.max(2, tileW * 0.06);
+
+    const fade = 1 - skeleton.decayFraction(tick) * 0.75;
+    ctx.globalAlpha = fade;
+
+    // Bone cross
+    const boneColor = skeleton.isAgent ? '#e8e0cc' : '#c8b898';
+    ctx.strokeStyle = boneColor;
+    ctx.lineWidth   = Math.max(1, r * 0.7);
+    ctx.lineCap     = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(ax - r, ay); ctx.lineTo(ax + r, ay);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax, ay - r); ctx.lineTo(ax, ay + r);
+    ctx.stroke();
+
+    // Skull dot
+    ctx.fillStyle = boneColor;
+    ctx.beginPath();
+    ctx.arc(ax, ay - r * 1.1, r * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+    ctx.lineCap     = 'butt';
+  }
+
   // Returns the agent closest to the given screen position, within a pixel radius
   getAgentAt(screenX, screenY, agents, pixelRadius = 14) {
+    return this._nearestEntity(screenX, screenY, agents, pixelRadius,
+      a => a.alive);
+  }
+
+  getAnimalAt(screenX, screenY, animals, pixelRadius = 12) {
+    return this._nearestEntity(screenX, screenY, animals, pixelRadius,
+      a => a.alive);
+  }
+
+  // Returns nearest skeleton to a clicked tile (same tile match)
+  getSkeletonAt(screenX, screenY, world) {
+    const hit = this.getTileAt(screenX, screenY, world);
+    if (!hit) return null;
+    return world.skeletons.find(s => s.x === hit.x && s.y === hit.y) ?? null;
+  }
+
+  _nearestEntity(screenX, screenY, list, radius, filter) {
     const { canvas, camera } = this;
     const tileW = BASE_TILE_W * camera.zoom;
     const tileH = BASE_TILE_H * camera.zoom;
     const cx = canvas.width / 2, cy = canvas.height / 2;
 
-    let best = null, bestDist = pixelRadius;
-    for (const agent of agents) {
-      if (!agent.alive) continue;
-      const { sx, sy } = this._isoProject(agent.x, agent.y, cx, cy, tileW, tileH, camera);
-      const ax = sx + tileW / 2, ay = sy;
-      const d = Math.hypot(screenX - ax, screenY - ay);
-      if (d < bestDist) { bestDist = d; best = agent; }
+    let best = null, bestDist = radius;
+    for (const item of list) {
+      if (!filter(item)) continue;
+      const { sx, sy } = this._isoProject(item.x, item.y, cx, cy, tileW, tileH, camera);
+      const d = Math.hypot(screenX - (sx + tileW / 2), screenY - sy);
+      if (d < bestDist) { bestDist = d; best = item; }
     }
     return best;
   }

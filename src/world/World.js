@@ -13,6 +13,9 @@ export class World {
 
     // Map<"x,y", PlacedStructure>
     this.structures = new Map();
+
+    // Skeleton[] — remains of dead agents and animals
+    this.skeletons = [];
   }
 
   getTile(x, y) {
@@ -123,5 +126,8 @@ export class World {
       s.decay();
       if (!s.intact) this.structures.delete(key);
     }
+
+    // Remove fully decayed skeletons
+    this.skeletons = this.skeletons.filter(s => !s.isDecayed(this.tick));
   }
 }

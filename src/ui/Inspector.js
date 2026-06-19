@@ -1,5 +1,6 @@
 import { STRUCTURE_DEF }      from '../knowledge/Structure.js';
 import { STRUCTURE_BUILD_DEF } from '../world/PlacedStructure.js';
+import { ANIMAL_DEF }          from '../animals/Animal.js';
 
 export class Inspector {
   constructor() {
@@ -55,6 +56,50 @@ export class Inspector {
         ${society.sharedKnowledge.map(id => `
           <div style="color:#8abaff;font-size:11px">✓ ${STRUCTURE_DEF[id]?.name ?? id}</div>
         `).join('') || '<div style="color:#666;font-style:italic">None shared yet</div>'}
+      </div>` : ''}
+    `;
+  }
+
+  showAnimal(animal) {
+    this._panel.classList.remove('hidden');
+    const def = ANIMAL_DEF[animal.type];
+    this._title.textContent = `${def.name} #${animal.id}`;
+    this._body.innerHTML = `
+      <div class="inspector-section">
+        <div class="inspector-label">Status</div>
+        <div>State: ${animal.state}</div>
+        <div>Age: ${animal.age}</div>
+        <div>Position: (${animal.x}, ${animal.y})</div>
+      </div>
+      <div class="inspector-section">
+        <div class="inspector-label">Health</div>
+        ${needBar('Health', animal.health / animal.maxHealth, 'energy')}
+      </div>
+    `;
+  }
+
+  showSkeleton(skeleton, currentTick) {
+    this._panel.classList.remove('hidden');
+    const label = skeleton.isAgent
+      ? `Agent #${skeleton.agentId}`
+      : ANIMAL_DEF[skeleton.sourceType]?.name ?? skeleton.sourceType;
+    this._title.textContent = `Remains of ${label}`;
+
+    const decayPct = Math.round(skeleton.decayFraction(currentTick) * 100);
+    const known    = skeleton.corpusSnapshot;
+
+    this._body.innerHTML = `
+      <div class="inspector-section">
+        <div class="inspector-label">Record</div>
+        <div>Type: ${skeleton.sourceType}</div>
+        ${skeleton.isAgent ? `<div>Lived: ${skeleton.agentAge} ticks</div>` : ''}
+        <div>Died: tick ${skeleton.diedAt}</div>
+        <div>Decay: ${decayPct}%</div>
+      </div>
+      ${known.length > 0 ? `
+      <div class="inspector-section">
+        <div class="inspector-label">Knowledge at Death</div>
+        ${known.map(({ id, mastery }) => knowledgeBar(id, mastery)).join('')}
       </div>` : ''}
     `;
   }
