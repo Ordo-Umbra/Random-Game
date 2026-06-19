@@ -7,6 +7,7 @@ import { SocietyTracker }      from './societies/Society.js';
 import { UI }                  from './ui/UI.js';
 import { Inspector }           from './ui/Inspector.js';
 import { TileType }            from './world/Tile.js';
+import { tickReproduction }    from './agents/Reproduction.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const WORLD_W       = 64;
@@ -113,6 +114,9 @@ function simTick() {
     if (brain) brain.update(agent, world, agents, world.tick);
     agent.tick(world, agents);
   }
+
+  // Reproduction
+  tickReproduction(agents, world, spawnAgent);
 
   // Reap dead agents
   agents = agents.filter(a => {

@@ -21,8 +21,12 @@ export class Agent {
 
     // Movement state
     this._path = [];
-    this._goal = null;        // { x, y } or null
+    this._goal = null;
     this._actionCooldown = 0;
+
+    // Reproduction
+    this.reproduceCooldown = 150 + Math.floor(Math.random() * 100);
+    this.minReproduceAge   = 80;
 
     // Visual — slight color variation per agent for readability
     this._hue = Math.floor(Math.random() * 360);
@@ -30,6 +34,16 @@ export class Agent {
 
   get alive() {
     return this.hunger > 0 && this.energy > 0 && this.age < this.lifespan;
+  }
+
+  get canReproduce() {
+    return (
+      this.alive &&
+      this.age >= this.minReproduceAge &&
+      this.reproduceCooldown <= 0 &&
+      this.hunger >= 0.6 &&
+      this.energy >= 0.4
+    );
   }
 
   // Called once per world tick by the Brain
@@ -49,6 +63,7 @@ export class Agent {
     ).length;
     if (nearbyCount > 0) this.social = Math.min(1, this.social + 0.001 * nearbyCount);
 
+    if (this.reproduceCooldown > 0) this.reproduceCooldown--;
     this._actionCooldown--;
   }
 
@@ -61,7 +76,6 @@ export class Agent {
     return true;
   }
 
-  // Assign a new path computed from outside (Brain / World)
   setPath(path) {
     this._path = path ?? [];
   }
@@ -74,7 +88,6 @@ export class Agent {
     return this._path.length === 0 && this._goal === null && this._actionCooldown <= 0;
   }
 
-  // Eat from current tile if it has a food resource; returns amount eaten
   eat(world) {
     const tile = world.getTile(this.x, this.y);
     if (!tile) return 0;
@@ -88,7 +101,6 @@ export class Agent {
     return 0;
   }
 
-  // Rest; gains energy faster if agent knows shelter
   rest() {
     const shelterBonus = this.corpus.getMastery('basic_shelter') * 0.5;
     this.energy = Math.min(1, this.energy + 0.01 + shelterBonus * 0.005);

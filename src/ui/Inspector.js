@@ -30,6 +30,7 @@ export class Inspector {
         <div>Age: ${agent.age} / ${agent.lifespan}</div>
         <div>Position: (${agent.x}, ${agent.y})</div>
         <div>Society: ${society ? `Group #${agent.societyId} (${society.members.size} members)` : 'None'}</div>
+        <div>Reproduce: ${agent.canReproduce ? '✓ ready' : agent.reproduceCooldown > 0 ? `cooldown ${agent.reproduceCooldown}` : agent.age < agent.minReproduceAge ? `too young (${agent.minReproduceAge - agent.age})` : 'needs not met'}</div>
       </div>
 
       <div class="inspector-section">
