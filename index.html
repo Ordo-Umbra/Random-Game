@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergent Worlds</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="world-canvas"></canvas>
+
+    <div id="hud">
+      <div id="time-controls">
+        <button id="btn-pause" title="Pause/Resume">⏸</button>
+        <button id="btn-slow" title="Slow">🐢</button>
+        <button id="btn-normal" title="Normal Speed">▶</button>
+        <button id="btn-fast" title="Fast">⚡</button>
+      </div>
+      <div id="stats">
+        <span id="stat-agents">Agents: 0</span>
+        <span id="stat-tick">Tick: 0</span>
+        <span id="stat-societies">Societies: 0</span>
+      </div>
+    </div>
+
+    <div id="inspector" class="panel hidden">
+      <div id="inspector-header">
+        <span id="inspector-title">Inspector</span>
+        <button id="inspector-close">✕</button>
+      </div>
+      <div id="inspector-body"></div>
+    </div>
+
+    <div id="toolbar">
+      <button class="tool-btn active" data-tool="inspect" title="Inspect">🔍</button>
+      <button class="tool-btn" data-tool="place-agent" title="Place Agent">🧍</button>
+      <button class="tool-btn" data-tool="place-forest" title="Place Forest">🌲</button>
+      <button class="tool-btn" data-tool="place-water" title="Place Water">💧</button>
+      <button class="tool-btn" data-tool="place-mountain" title="Place Mountain">⛰</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
