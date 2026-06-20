@@ -17,12 +17,14 @@ export class Builder {
   // Returns true if the builder is consuming this agent's action this tick.
   // Must be called after the agent has moved to the right tile.
   update(agent, world) {
-    // Passive repair: if standing on a damaged structure we know, fix it
+    // Passive repair: if standing on a damaged structure we know, fix it.
+    // Metal Tools (SU2) make repair work faster.
     const here = world.getStructure(agent.x, agent.y);
     if (here && !this._buildingType) {
       const def = STRUCTURE_BUILD_DEF[here.type];
       if (def && agent.corpus.getMastery(def.requiredKnowledge) >= def.minMastery * 0.6) {
-        here.repair(REPAIR_RATE);
+        const repairBoost = 1 + agent.corpus.getMastery('metal_tools') * 1.0;
+        here.repair(REPAIR_RATE * repairBoost);
         agent.corpus.use(def.requiredKnowledge);
       }
     }
@@ -69,7 +71,10 @@ export class Builder {
   _startBuild(agent, type) {
     const def = STRUCTURE_BUILD_DEF[type];
     this._buildingType = type;
-    this._buildTimer   = def.buildTime;
+    // Metal Tools (SU2) speed up construction by up to ~40%
+    const speedup = 1 - agent.corpus.getMastery('metal_tools') * 0.4;
+    this._buildTimer = Math.max(1, Math.round(def.buildTime * speedup));
+    if (agent.corpus.getMastery('metal_tools') > 0.1) agent.corpus.use('metal_tools');
     agent.energy = Math.max(0.05, agent.energy - 0.08);
     agent.hunger = Math.max(0.05, agent.hunger - 0.05);
   }

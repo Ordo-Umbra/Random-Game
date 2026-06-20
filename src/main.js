@@ -214,6 +214,7 @@ function handleHunting() {
     const bowMastery   = agent.corpus.getMastery('bow_hunting');
     const catchRange   = bowMastery > 0.35 ? 1 : 0;
     const stoneMastery = agent.corpus.getMastery('stone_tools');
+    const metalMastery = agent.corpus.getMastery('metal_tools');
 
     // Catch prey within range
     const prey = animals.find(a =>
@@ -221,13 +222,14 @@ function handleHunting() {
       Math.abs(a.x - agent.x) <= catchRange && Math.abs(a.y - agent.y) <= catchRange
     );
     if (prey) {
-      const catchChance = 0.12 + stoneMastery * 0.30 + bowMastery * 0.25;
+      const catchChance = 0.12 + stoneMastery * 0.30 + bowMastery * 0.25 + metalMastery * 0.20;
       if (Math.random() < catchChance) {
         prey.takeDamage(1);
         if (!prey.alive) {
           agent.hunger = Math.min(1, agent.hunger + ANIMAL_DEF[prey.type].foodValue);
           agent.corpus.use('stone_tools');
           if (bowMastery > 0.1) agent.corpus.use('bow_hunting');
+          if (metalMastery > 0.1) agent.corpus.use('metal_tools');
         }
       }
       continue;

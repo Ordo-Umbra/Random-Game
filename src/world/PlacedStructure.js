@@ -45,6 +45,60 @@ export const STRUCTURE_BUILD_DEF = {
     decayRate: 0.05,
     buildTime: 30,
   },
+
+  // ── Advanced structures (gated by the tech tree) ────────────────────────────
+
+  // Pasture: domesticated animals → a steady meat supply
+  pasture: {
+    id: 'pasture',
+    name: 'Pasture',
+    requiredKnowledge: 'animal_husbandry',
+    minMastery: 0.40,
+    allowedTiles: ['grass', 'dirt'],
+    requiresAdjacentWater: false,
+    maxHealth: 120,
+    decayRate: 0.04,
+    buildTime: 45,
+  },
+
+  // Granary: preserved-food store — feeds and slows starvation nearby
+  granary: {
+    id: 'granary',
+    name: 'Granary',
+    requiredKnowledge: 'food_preservation',
+    minMastery: 0.40,
+    allowedTiles: ['grass', 'dirt', 'sand'],
+    requiresAdjacentWater: false,
+    maxHealth: 160,
+    decayRate: 0.025,
+    buildTime: 50,
+  },
+
+  // Stone House: durable shelter, far better rest than a basic shelter
+  stone_house: {
+    id: 'stone_house',
+    name: 'Stone House',
+    requiredKnowledge: 'masonry',
+    minMastery: 0.45,
+    allowedTiles: ['grass', 'dirt', 'sand'],
+    requiresAdjacentWater: false,
+    maxHealth: 300,
+    decayRate: 0.015,
+    buildTime: 70,
+  },
+
+  // Monument: civic landmark — lifts social need and preserves knowledge nearby
+  monument: {
+    id: 'monument',
+    name: 'Monument',
+    requiredKnowledge: 'architecture',
+    minMastery: 0.45,
+    allowedTiles: ['grass', 'dirt', 'sand'],
+    requiresAdjacentWater: false,
+    maxHealth: 500,
+    decayRate: 0.008,
+    buildTime: 90,
+  },
 };
 
 export class PlacedStructure {

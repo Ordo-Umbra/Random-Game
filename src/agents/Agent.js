@@ -57,10 +57,21 @@ export class Agent {
   tick(world, allAgents) {
     if (!this.alive) return;
     this.age++;
-    this.corpus.tick(this.corpus.getMastery('ritual'));
 
-    // Passive need decay
-    this.hunger = Math.max(0, this.hunger - 0.0008);
+    // Knowledge preservation: ritual mastery, or standing near a Monument
+    let preserve = this.corpus.getMastery('ritual');
+    if (world && hasNearbyStructure(this.x, this.y, 'monument', world, 5)) {
+      preserve = Math.max(preserve, 0.5);
+    }
+    this.corpus.tick(preserve);
+
+    // Passive need decay — food preservation & a nearby granary slow starvation
+    const foodPres = this.corpus.getMastery('food_preservation');
+    let hungerDecay = 0.0008 * (1 - foodPres * 0.4);
+    if (world && hasNearbyStructure(this.x, this.y, 'granary', world, 4)) {
+      hungerDecay *= 0.6;
+    }
+    this.hunger = Math.max(0, this.hunger - hungerDecay);
     this.energy = Math.max(0, this.energy - 0.0004);
     this.social  = Math.max(0, this.social  - 0.0002);
 
@@ -69,6 +80,11 @@ export class Agent {
       a !== this && Math.abs(a.x - this.x) + Math.abs(a.y - this.y) <= 2
     ).length;
     if (nearbyCount > 0) this.social = Math.min(1, this.social + 0.001 * nearbyCount);
+
+    // A Monument lifts the whole settlement's morale
+    if (world && hasNearbyStructure(this.x, this.y, 'monument', world, 5)) {
+      this.social = Math.min(1, this.social + 0.002);
+    }
 
     if (this.reproduceCooldown > 0) this.reproduceCooldown--;
     this._actionCooldown--;
@@ -109,18 +125,30 @@ export class Agent {
     let gain = 0;
 
     if (tile.resource === 'food' || tile.resource === 'fish') {
-      gain = 0.15;
+      // Foraging (U1): better extraction from wild land
+      gain = 0.15 + this.corpus.getMastery('foraging') * 0.12;
+      if (this.corpus.getMastery('foraging') > 0.1) this.corpus.use('foraging');
     }
 
     const structure = world.getStructure(this.x, this.y);
     if (structure && structure.intact) {
       if (structure.type === 'farm') {
-        gain = Math.max(gain, 0.18);
+        // Irrigation (SU2): lifts farm yield
+        gain = Math.max(gain, 0.18 + this.corpus.getMastery('irrigation') * 0.15);
         this.corpus.use('crop_farming');
+        if (this.corpus.getMastery('irrigation') > 0.1) this.corpus.use('irrigation');
       }
       if (structure.type === 'fishing_dock') {
         gain = Math.max(gain, 0.16);
         this.corpus.use('fishing');
+      }
+      if (structure.type === 'pasture') {
+        gain = Math.max(gain, 0.24);   // domesticated meat: reliable and rich
+        this.corpus.use('animal_husbandry');
+      }
+      if (structure.type === 'granary') {
+        gain = Math.max(gain, 0.30);   // preserved stores: the best single meal
+        this.corpus.use('food_preservation');
       }
     }
 
@@ -137,10 +165,12 @@ export class Agent {
     return gain;
   }
 
-  // Rest; energy regen is boosted by a nearby shelter
+  // Rest; energy regen is boosted by nearby shelter (stone house is best)
   rest(world) {
     let regen = 0.01;
-    if (world && hasNearbyStructure(this.x, this.y, 'shelter', world, 1)) {
+    if (world && hasNearbyStructure(this.x, this.y, 'stone_house', world, 1)) {
+      regen += 0.03;     // stone house: warmest, most secure rest
+    } else if (world && hasNearbyStructure(this.x, this.y, 'shelter', world, 1)) {
       regen += 0.015;
     }
     regen += this.corpus.getMastery('basic_shelter') * 0.003;
