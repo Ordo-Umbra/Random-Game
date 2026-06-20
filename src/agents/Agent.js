@@ -30,6 +30,9 @@ export class Agent {
     this.reproduceCooldown = 150 + Math.floor(Math.random() * 100);
     this.minReproduceAge   = 80;
 
+    // Gathered materials for construction
+    this.inventory = { wood: 0, stone: 0 };
+
     // Visual — slight color variation per agent for readability
     this._hue = Math.floor(Math.random() * 360);
   }
