@@ -108,6 +108,22 @@ export class World {
     return best;
   }
 
+  // Find nearest passable tile whose tile.resource matches the given string
+  findNearestWithResource(ox, oy, resource, radius = 30) {
+    let best = null, bestDist = Infinity;
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const nx = ox + dx, ny = oy + dy;
+        const t = this.getTile(nx, ny);
+        if (t && t.passable && t.resource === resource) {
+          const d = Math.abs(dx) + Math.abs(dy);
+          if (d < bestDist) { bestDist = d; best = { x: nx, y: ny }; }
+        }
+      }
+    }
+    return best;
+  }
+
   // Whether any adjacent tile (4-dir) is water
   hasAdjacentWater(x, y) {
     for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {

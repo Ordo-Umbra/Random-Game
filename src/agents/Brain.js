@@ -68,8 +68,10 @@ export class Brain {
 
     if (agent.eat(world) > 0) return;
 
-    // Prefer farm/dock structures first, then natural tiles
-    const farmSpot = world.findNearestStructure(agent.x, agent.y, 'farm', 20)
+    // Prefer the richest food structures first, then natural tiles
+    const farmSpot = world.findNearestStructure(agent.x, agent.y, 'granary', 20)
+      || world.findNearestStructure(agent.x, agent.y, 'pasture', 20)
+      || world.findNearestStructure(agent.x, agent.y, 'farm', 20)
       || world.findNearestStructure(agent.x, agent.y, 'fishing_dock', 20);
 
     const naturalSpot = !farmSpot && (

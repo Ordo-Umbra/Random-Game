@@ -237,6 +237,102 @@ export class IsometricRenderer {
         ctx.stroke();
         break;
       }
+      case 'pasture': {
+        // Fence posts around the tile + a grazing animal dot
+        ctx.strokeStyle = '#9a7a4a';
+        ctx.lineWidth   = Math.max(1, tileW * 0.03);
+        const corners = [
+          [cx,               ty - tileH / 2],   // top
+          [sx + tileW,       ty],               // right
+          [cx,               ty + tileH / 2],   // bottom
+          [sx,               ty],               // left
+        ];
+        ctx.beginPath();
+        ctx.moveTo(corners[0][0], corners[0][1]);
+        for (let i = 1; i < corners.length; i++) ctx.lineTo(corners[i][0], corners[i][1]);
+        ctx.closePath();
+        ctx.stroke();
+        // Grazing animal
+        ctx.fillStyle = '#c8b090';
+        ctx.beginPath();
+        ctx.ellipse(cx, ty - tileH * 0.12, tileW * 0.09, tileH * 0.09, 0, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'granary': {
+        // Raised round silo with a conical roof
+        const w = tileW * 0.30, h = tileH * 0.75;
+        const baseY = ty - tileH * 0.55;
+        ctx.fillStyle = '#c8a050';
+        ctx.beginPath();
+        ctx.rect(cx - w / 2, baseY - h, w, h);
+        ctx.fill();
+        // Conical roof
+        ctx.beginPath();
+        ctx.moveTo(cx - w / 2 - 3, baseY - h);
+        ctx.lineTo(cx,             baseY - h - tileH * 0.4);
+        ctx.lineTo(cx + w / 2 + 3, baseY - h);
+        ctx.closePath();
+        ctx.fillStyle = '#7a5028';
+        ctx.fill();
+        // Door
+        ctx.fillStyle = '#5a3a1a';
+        ctx.fillRect(cx - w * 0.18, baseY - h * 0.4, w * 0.36, h * 0.4);
+        break;
+      }
+      case 'stone_house': {
+        // Solid stone block with a flat-ish roof and a door
+        const w = tileW * 0.46, h = tileH * 0.7;
+        const baseY = ty - tileH * 0.55;
+        // Walls
+        ctx.fillStyle = '#9a9a96';
+        ctx.beginPath();
+        ctx.rect(cx - w / 2, baseY - h, w, h);
+        ctx.fill();
+        ctx.strokeStyle = '#6a6a66';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Roof
+        ctx.beginPath();
+        ctx.moveTo(cx - w / 2 - 4, baseY - h);
+        ctx.lineTo(cx,             baseY - h - tileH * 0.4);
+        ctx.lineTo(cx + w / 2 + 4, baseY - h);
+        ctx.closePath();
+        ctx.fillStyle = '#5a5a56';
+        ctx.fill();
+        // Door
+        ctx.fillStyle = '#3a2a18';
+        ctx.fillRect(cx - w * 0.13, baseY - h * 0.5, w * 0.26, h * 0.5);
+        break;
+      }
+      case 'monument': {
+        // Tall obelisk on a stepped base
+        const w = tileW * 0.22;
+        const baseY = ty - tileH * 0.5;
+        // Stepped base
+        ctx.fillStyle = '#b8b0a0';
+        ctx.fillRect(cx - w, baseY - tileH * 0.12, w * 2, tileH * 0.12);
+        ctx.fillRect(cx - w * 0.7, baseY - tileH * 0.22, w * 1.4, tileH * 0.12);
+        // Obelisk shaft
+        const shaftH = tileH * 1.3;
+        ctx.fillStyle = '#d8cfae';
+        ctx.beginPath();
+        ctx.moveTo(cx - w * 0.5, baseY - tileH * 0.22);
+        ctx.lineTo(cx - w * 0.25, baseY - tileH * 0.22 - shaftH);
+        ctx.lineTo(cx + w * 0.25, baseY - tileH * 0.22 - shaftH);
+        ctx.lineTo(cx + w * 0.5, baseY - tileH * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        // Gilded cap
+        ctx.fillStyle = '#ffd97d';
+        ctx.beginPath();
+        ctx.moveTo(cx - w * 0.25, baseY - tileH * 0.22 - shaftH);
+        ctx.lineTo(cx,            baseY - tileH * 0.22 - shaftH - tileH * 0.25);
+        ctx.lineTo(cx + w * 0.25, baseY - tileH * 0.22 - shaftH);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
     }
 
     ctx.globalAlpha = 1;

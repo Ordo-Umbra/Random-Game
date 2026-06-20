@@ -18,7 +18,7 @@ export const TILE_DEF = {
   [TileType.DIRT]:          { color: '#6b4a2a', topColor: '#8a5e38', passable: true,  resource: null },
   [TileType.FOREST]:        { color: '#1a4a1a', topColor: '#2a6a2a', passable: true,  resource: 'wood' },
   [TileType.MOUNTAIN]:      { color: '#5a5a6a', topColor: '#7a7a8a', passable: false, resource: 'stone' },
-  [TileType.SNOW]:          { color: '#8a9aaa', topColor: '#c0d0e0', passable: true,  resource: null },
+  [TileType.SNOW]:          { color: '#8a9aaa', topColor: '#c0d0e0', passable: true,  resource: 'stone' },
 };
 
 export class Tile {

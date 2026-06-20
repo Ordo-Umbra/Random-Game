@@ -34,6 +34,38 @@ The world is shaped less by what you do (though you have powers) and more by wha
 - Structures agents build persist and degrade, giving future agents physical evidence of prior civilizations
 - Climate and resources shift, forcing adaptation — groups that can't adapt (or teach adaptation) collapse
 
+## The Tech Tree
+
+Knowledge is organised by **URP seed archetype** — every structure plays one of three
+roles in the recursion hierarchy:
+
+- **U1 (unity)** — binds many into one: *foraging, fire, language, navigation, writing, architecture*
+- **SU2 (paired transformer)** — bridges opposites: *stone tools, cooking, fishing, bow hunting, crop farming, irrigation, medicine, metal tools, food preservation*
+- **SU3 (triadic mediator)** — three-body stability: *pottery, metal smelting, ritual, governance, masonry, animal husbandry*
+
+Each agent's progress is summarised by the URP functional **S = ΔC + κ·ΔI**
+(breadth + capacity × coherence), shown live in the inspector.
+
+The tree flows from subsistence → tools → structures:
+
+```
+foraging ─┐
+          ├─► crop farming ─► irrigation
+stone tools ┤              └─► pottery ─► food preservation ─► GRANARY
+          ├─► bow hunting ─► animal husbandry ─► PASTURE
+          ├─► masonry ─► STONE HOUSE
+          │      └─┬─► architecture ─► MONUMENT
+fire making ┤      │
+          ├─► cooking      writing ─┘
+          └─► metal smelting ─► metal tools
+language ─► ritual ─► governance
+```
+
+Knowledge produces real behaviour: **cooking** boosts food near fire, **irrigation**
+raises farm yield, **metal tools** speed building & hunting, **food preservation**
+slows starvation, **ritual** and the **Monument** preserve knowledge against decay,
+and **governance** strengthens cultural inheritance between generations.
+
 ## How It Differs from WorldBox
 
 | WorldBox | Emergent Worlds |

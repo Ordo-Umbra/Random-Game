@@ -116,6 +116,32 @@ function environmentAllowsDiscovery(id, tile, agent, world, nearbyCount) {
     case 'governance':
       return nearbyCount >= 3 || agent.social > 0.75;
 
+    // U1: foraging is learned while gathering on living land
+    case 'foraging':
+      return tile.type === 'grass' || tile.type === 'forest' ||
+             tile.resource === 'food' || tile.resource === 'fish';
+
+    // SU2: irrigation needs water at hand to channel onto crops
+    case 'irrigation':
+      return world.hasAdjacentWater(agent.x, agent.y);
+
+    // SU3: domestication is learned on open grazing land
+    case 'animal_husbandry':
+      return tile.type === 'grass' || tile.type === 'dirt';
+
+    // SU3 / SU2: working stone requires stone
+    case 'masonry':
+    case 'metal_tools':
+      return tile.resource === 'stone';
+
+    // SU2: preserving food is figured out near a fire (smoking/drying)
+    case 'food_preservation':
+      return hasNearbyStructure(agent.x, agent.y, 'campfire', world, 3);
+
+    // U1: architecture is a civic art — it emerges among others
+    case 'architecture':
+      return nearbyCount >= 2;
+
     default:
       return true;
   }

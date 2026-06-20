@@ -45,6 +45,15 @@ export class Inspector {
       </div>
 
       <div class="inspector-section">
+        <div class="inspector-label">Inventory</div>
+        <div style="display:flex;gap:12px;font-size:12px">
+          <span>Wood <b style="color:#c8a050">${agent.inventory.wood}</b>/8</span>
+          <span>Stone <b style="color:#aaaacc">${agent.inventory.stone}</b>/8</span>
+        </div>
+        <div style="color:#666;font-size:11px;margin-top:3px">${agent.builder.activity}</div>
+      </div>
+
+      <div class="inspector-section">
         <div class="inspector-label">Emergence Score  S = ΔC + κ·ΔI</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:#aaa;margin-bottom:4px">
           <span>κ <b style="color:#fff">${Math.round(kappa * 100)}%</b></span>
