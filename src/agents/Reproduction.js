@@ -1,9 +1,9 @@
 // Handles agent reproduction: partner-finding, offspring creation, knowledge inheritance.
 
-const PARTNER_RANGE      = 2;     // tiles to search for a mate
+const PARTNER_RANGE      = 5;     // tiles to search for a mate
 const INHERIT_FACTOR     = 0.45;  // fraction of parent mastery passed to child
 const INHERIT_NOISE      = 0.1;   // ±random noise on each inherited mastery
-const POST_BIRTH_COOLDOWN = 300;  // ticks before either parent can reproduce again
+const POST_BIRTH_COOLDOWN = 200;  // ticks before either parent can reproduce again
 const POPULATION_CAP     = 120;   // soft cap — no new births above this
 
 export function tickReproduction(agents, world, spawnAgent) {

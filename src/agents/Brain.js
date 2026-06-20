@@ -35,7 +35,7 @@ export class Brain {
     }
 
     // --- Priority 4: Low hunger ---
-    if (agent.hunger < 0.6) {
+    if (agent.hunger < 0.65) {
       this._seekFood(agent, world);
       return;
     }

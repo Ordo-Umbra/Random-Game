@@ -72,6 +72,14 @@ export class Builder {
       if (!spot) continue;
 
       const cost = def.cost ?? { wood: 0, stone: 0 };
+
+      // Skip if stone is required but nowhere close enough — agents would
+      // starve trekking to distant mountain peaks for a single build.
+      if (cost.stone > 0 && agent.inventory.stone < cost.stone) {
+        const stoneAccess = world.findNearestWithResource(agent.x, agent.y, 'stone', 22);
+        if (!stoneAccess) continue;
+      }
+
       const hasMats = agent.inventory.wood  >= cost.wood &&
                       agent.inventory.stone >= cost.stone;
 
@@ -102,6 +110,14 @@ export class Builder {
     const def = STRUCTURE_BUILD_DEF[this._plannedType];
     const cost = def.cost ?? { wood: 0, stone: 0 };
     const inv  = agent.inventory;
+
+    // Abandon if the agent is getting too hungry — survival comes first.
+    // This prevents starvation on long stone-gathering trips to mountain peaks.
+    if (agent.hunger < 0.48) {
+      this._plannedType = null;
+      this._plannedSpot = null;
+      return false;
+    }
 
     // Abandon if spot was taken or a nearby structure of the same type appeared
     if (world.getStructure(this._plannedSpot.x, this._plannedSpot.y) ||

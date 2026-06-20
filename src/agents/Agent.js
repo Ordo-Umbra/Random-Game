@@ -46,7 +46,7 @@ export class Agent {
       this.alive &&
       this.age >= this.minReproduceAge &&
       this.reproduceCooldown <= 0 &&
-      this.hunger >= 0.6 &&
+      this.hunger >= 0.55 &&
       this.energy >= 0.4
     );
   }
@@ -70,7 +70,7 @@ export class Agent {
 
     // Passive need decay — food preservation & a nearby granary slow starvation
     const foodPres = this.corpus.getMastery('food_preservation');
-    let hungerDecay = 0.0008 * (1 - foodPres * 0.4);
+    let hungerDecay = 0.0006 * (1 - foodPres * 0.4);
     if (world && hasNearbyStructure(this.x, this.y, 'granary', world, 4)) {
       hungerDecay *= 0.6;
     }
